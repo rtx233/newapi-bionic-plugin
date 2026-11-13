@@ -1,0 +1,446 @@
+{
+  "cases": [
+    {
+      "name": "v1 list, all models",
+      "hook": "convertResponse",
+      "args": [
+        {
+          "baseUrl": "http://127.0.0.1:1234",
+          "path": "/v1/models",
+          "config": {}
+        },
+        {
+          "status": 200,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": "{\"models\": [{\"type\": \"llm\", \"publisher\": \"qwen\", \"key\": \"qwen/qwen3-8b\", \"loaded_instances\": [{\"id\": \"qwen/qwen3-8b\"}]}, {\"type\": \"llm\", \"publisher\": \"openai\", \"key\": \"openai/gpt-oss-20b\", \"loaded_instances\": []}, {\"type\": \"embedding\", \"publisher\": \"nomic-ai\", \"key\": \"text-embedding-nomic-embed-text-v1.5\", \"loaded_instances\": []}]}"
+        }
+      ],
+      "expected": {
+        "body": {
+          "object": "list",
+          "data": [
+            {
+              "id": "qwen/qwen3-8b",
+              "object": "model",
+              "owned_by": "qwen"
+            },
+            {
+              "id": "openai/gpt-oss-20b",
+              "object": "model",
+              "owned_by": "openai"
+            },
+            {
+              "id": "text-embedding-nomic-embed-text-v1.5",
+              "object": "model",
+              "owned_by": "nomic-ai"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "v1 list, language models only",
+      "hook": "convertResponse",
+      "args": [
+        {
+          "baseUrl": "http://127.0.0.1:1234",
+          "path": "/v1/models",
+          "config": {
+            "modelTypes": "llm"
+          }
+        },
+        {
+          "status": 200,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": "{\"models\": [{\"type\": \"llm\", \"publisher\": \"qwen\", \"key\": \"qwen/qwen3-8b\", \"loaded_instances\": [{\"id\": \"qwen/qwen3-8b\"}]}, {\"type\": \"llm\", \"publisher\": \"openai\", \"key\": \"openai/gpt-oss-20b\", \"loaded_instances\": []}, {\"type\": \"embedding\", \"publisher\": \"nomic-ai\", \"key\": \"text-embedding-nomic-embed-text-v1.5\", \"loaded_instances\": []}]}"
+        }
+      ],
+      "expected": {
+        "body": {
+          "object": "list",
+          "data": [
+            {
+              "id": "qwen/qwen3-8b",
+              "object": "model",
+              "owned_by": "qwen"
+            },
+            {
+              "id": "openai/gpt-oss-20b",
+              "object": "model",
+              "owned_by": "openai"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "v1 list, embedding models only",
+      "hook": "convertResponse",
+      "args": [
+        {
+          "baseUrl": "http://127.0.0.1:1234",
+          "path": "/v1/models",
+          "config": {
+            "modelTypes": "embedding"
+          }
+        },
+        {
+          "status": 200,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": "{\"models\": [{\"type\": \"llm\", \"publisher\": \"qwen\", \"key\": \"qwen/qwen3-8b\", \"loaded_instances\": [{\"id\": \"qwen/qwen3-8b\"}]}, {\"type\": \"llm\", \"publisher\": \"openai\", \"key\": \"openai/gpt-oss-20b\", \"loaded_instances\": []}, {\"type\": \"embedding\", \"publisher\": \"nomic-ai\", \"key\": \"text-embedding-nomic-embed-text-v1.5\", \"loaded_instances\": []}]}"
+        }
+      ],
+      "expected": {
+        "body": {
+          "object": "list",
+          "data": [
+            {
+              "id": "text-embedding-nomic-embed-text-v1.5",
+              "object": "model",
+              "owned_by": "nomic-ai"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "v1 list, loaded only",
+      "hook": "convertResponse",
+      "args": [
+        {
+          "baseUrl": "http://127.0.0.1:1234",
+          "path": "/v1/models",
+          "config": {
+            "loadedOnly": true
+          }
+        },
+        {
+          "status": 200,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": "{\"models\": [{\"type\": \"llm\", \"publisher\": \"qwen\", \"key\": \"qwen/qwen3-8b\", \"loaded_instances\": [{\"id\": \"qwen/qwen3-8b\"}]}, {\"type\": \"llm\", \"publisher\": \"openai\", \"key\": \"openai/gpt-oss-20b\", \"loaded_instances\": []}, {\"type\": \"embedding\", \"publisher\": \"nomic-ai\", \"key\": \"text-embedding-nomic-embed-text-v1.5\", \"loaded_instances\": []}]}"
+        }
+      ],
+      "expected": {
+        "body": {
+          "object": "list",
+          "data": [
+            {
+              "id": "qwen/qwen3-8b",
+              "object": "model",
+              "owned_by": "qwen"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "404 on /api/v1 falls back to /api/v0",
+      "hook": "convertResponse",
+      "args": [
+        {
+          "baseUrl": "http://127.0.0.1:1234",
+          "path": "/v1/models",
+          "config": {}
+        },
+        {
+          "status": 404,
+          "headers": {},
+          "body": "{\"error\":\"Unexpected endpoint or method.\"}"
+        }
+      ],
+      "expected": {
+        "next": {
+          "method": "GET",
+          "path": "/api/v0/models"
+        },
+        "state": {
+          "fallback": 1
+        }
+      }
+    },
+    {
+      "name": "v0 list, vlm counts as language model, loaded only",
+      "hook": "convertResponse",
+      "args": [
+        {
+          "baseUrl": "http://127.0.0.1:1234",
+          "path": "/v1/models",
+          "config": {
+            "modelTypes": "llm",
+            "loadedOnly": true
+          },
+          "state": {
+            "fallback": 1
+          }
+        },
+        {
+          "status": 200,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": "{\"object\": \"list\", \"data\": [{\"id\": \"qwen/qwen3-vl-8b\", \"object\": \"model\", \"type\": \"vlm\", \"publisher\": \"qwen\", \"state\": \"loaded\"}, {\"id\": \"text-embedding-nomic-embed-text-v1.5\", \"object\": \"model\", \"type\": \"embeddings\", \"publisher\": \"nomic-ai\", \"state\": \"not-loaded\"}]}"
+        }
+      ],
+      "expected": {
+        "body": {
+          "object": "list",
+          "data": [
+            {
+              "id": "qwen/qwen3-vl-8b",
+              "object": "model",
+              "owned_by": "qwen"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "404 on /api/v0 falls back to /v1/models",
+      "hook": "convertResponse",
+      "args": [
+        {
+          "baseUrl": "http://127.0.0.1:1234",
+          "path": "/v1/models",
+          "config": {},
+          "state": {
+            "fallback": 1
+          }
+        },
+        {
+          "status": 404,
+          "headers": {},
+          "body": ""
+        }
+      ],
+      "expected": {
+        "next": {
+          "method": "GET",
+          "path": "/v1/models"
+        },
+        "state": {
+          "fallback": 2
+        }
+      }
+    },
+    {
+      "name": "OpenAI list, embedding filter by name",
+      "hook": "convertResponse",
+      "args": [
+        {
+          "baseUrl": "http://127.0.0.1:1234",
+          "path": "/v1/models",
+          "config": {
+            "modelTypes": "embedding",
+            "loadedOnly": true
+          },
+          "state": {
+            "fallback": 2
+          }
+        },
+        {
+          "status": 200,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": "{\"object\": \"list\", \"data\": [{\"id\": \"qwen/qwen3-8b\", \"object\": \"model\", \"owned_by\": \"organization_owner\"}, {\"id\": \"text-embedding-nomic-embed-text-v1.5\", \"object\": \"model\", \"owned_by\": \"organization_owner\"}]}"
+        }
+      ],
+      "expected": {
+        "body": {
+          "object": "list",
+          "data": [
+            {
+              "id": "text-embedding-nomic-embed-text-v1.5",
+              "object": "model",
+              "owned_by": "organization_owner"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "404 after every fallback is an error",
+      "hook": "convertResponse",
+      "args": [
+        {
+          "baseUrl": "http://127.0.0.1:1234",
+          "path": "/v1/models",
+          "config": {},
+          "state": {
+            "fallback": 2
+          }
+        },
+        {
+          "status": 404,
+          "headers": {},
+          "body": "{\"error\":\"Unexpected endpoint or method.\"}"
+        }
+      ],
+      "expected": {
+        "error": {
+          "status": 404,
+          "message": "bionic: Unexpected endpoint or method."
+        }
+      }
+    },
+    {
+      "name": "401 is reported with the upstream message",
+      "hook": "convertResponse",
+      "args": [
+        {
+          "baseUrl": "http://127.0.0.1:1234",
+          "path": "/v1/models",
+          "config": {}
+        },
+        {
+          "status": 401,
+          "headers": {},
+          "body": "{\"error\":{\"message\":\"Invalid API token\"}}"
+        }
+      ],
+      "expected": {
+        "error": {
+          "status": 401,
+          "message": "bionic: Invalid API token"
+        }
+      }
+    },
+    {
+      "name": "non-JSON list is an error",
+      "hook": "convertResponse",
+      "args": [
+        {
+          "baseUrl": "http://127.0.0.1:1234",
+          "path": "/v1/models",
+          "config": {}
+        },
+        {
+          "status": 200,
+          "headers": {},
+          "body": "<html>"
+        }
+      ],
+      "expected": {
+        "error": {
+          "status": 502,
+          "message": "bionic: the model list is not JSON"
+        }
+      }
+    },
+    {
+      "name": "ttl is added when configured",
+      "hook": "prepareRequest",
+      "args": [
+        {
+          "baseUrl": "http://127.0.0.1:1234",
+          "path": "/v1/chat/completions",
+          "config": {
+            "ttl": 600
+          }
+        },
+        {
+          "path": "/v1/chat/completions",
+          "upstreamPath": "/v1/chat/completions",
+          "model": "qwen/qwen3-8b",
+          "stream": false,
+          "body": {
+            "model": "qwen/qwen3-8b",
+            "messages": []
+          },
+          "headers": {}
+        }
+      ],
+      "expected": {
+        "effects": [
+          {
+            "type": "json.patch",
+            "ops": [
+              {
+                "op": "add",
+                "path": "/ttl",
+                "value": 600
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "client ttl wins",
+      "hook": "prepareRequest",
+      "args": [
+        {
+          "baseUrl": "http://127.0.0.1:1234",
+          "path": "/v1/embeddings",
+          "config": {
+            "ttl": 600
+          }
+        },
+        {
+          "path": "/v1/embeddings",
+          "upstreamPath": "/v1/embeddings",
+          "model": "m",
+          "stream": false,
+          "body": {
+            "model": "m",
+            "input": "x",
+            "ttl": 30
+          },
+          "headers": {}
+        }
+      ],
+      "expected": null
+    },
+    {
+      "name": "no ttl configured",
+      "hook": "prepareRequest",
+      "args": [
+        {
+          "baseUrl": "http://127.0.0.1:1234",
+          "path": "/v1/chat/completions",
+          "config": {
+            "ttl": 0
+          }
+        },
+        {
+          "path": "/v1/chat/completions",
+          "upstreamPath": "/v1/chat/completions",
+          "model": "m",
+          "stream": true,
+          "body": {
+            "model": "m"
+          },
+          "headers": {}
+        }
+      ],
+      "expected": null
+    },
+    {
+      "name": "health check off",
+      "hook": "scheduled",
+      "args": [
+        {
+          "baseUrl": "http://127.0.0.1:1234",
+          "credential": null,
+          "apiKey": "x",
+          "config": {
+            "healthCheck": false
+          },
+          "reason": "timer",
+          "keyStatus": "enabled"
+        }
+      ],
+      "expected": {
+        "next": 3600
+      }
+    }
+  ]
+}
